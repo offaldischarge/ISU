@@ -1,0 +1,29 @@
+exec = prog
+comp = arm-rpizw-g++
+targets = all parts part1.o part2.o clean help
+
+.PHONY: all
+all: $(exec)
+$(exec): part1.o part2.o main.o
+	$(comp) -o $(exec) $^
+
+part1.o: part1.cpp part1.h
+	$(comp) -c -o $@ $<
+
+part2.o: part2.cpp part1.h
+	$(comp) -c -o $@ $<
+
+main.o: main.cpp
+	$(comp) -c -o $@ $<
+
+PHONY: clean
+clean:
+	rm -f $(exec) *.o *.out *.gch .d*
+
+help:
+	@echo $(targets)
+
+#$<: replaced by the first prerequisite of the rule.
+#$^: replaced by the list of all prerequisites of the rule.
+#$@: replaced by the target name
+#$?: list of prerequisites that are newer than the target is (if target does not exist, they are all considered newer).
