@@ -68,8 +68,9 @@ PLCSentryControllerThread(){
 	parkEntryOpen = true;
 	condSignal(entry);
 
-	while(carWaitingToEnter)
+	while(carWaitingToEnter){
 		condWait(entry, mutEntry);
+	}
 
 	closeEntryDoor();
 	parkEntryOpen = false;
@@ -88,8 +89,9 @@ PLCSexitControllerThread(){
 	parkExitOpen = true;
 	condSignal(exit);
 
-	while(carWaitingToExit)
+	while(carWaitingToExit){
 		condWait(exit, mutExit);
+	}
 
 	closeExitDoor();
 	parkExitOpen = false;
