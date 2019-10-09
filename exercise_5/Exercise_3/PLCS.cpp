@@ -1,7 +1,6 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <iostream>
-#include <time.h>
 
 using namespace std;
 
@@ -58,9 +57,7 @@ static void* carThread(void* arg){
 
         /* Car entered PLCS */
 
-        srand(time(0)); //Genererer seed baseret på nuværende tid
-
-        sleep((rand() % 7) + 1); //wait a bit outside parking lot
+        sleep(2); // wait a bit inside PL
 
         cout << "Car " << *id << " driving up to exit" << endl;
 
@@ -98,9 +95,7 @@ static void* carThread(void* arg){
 
         /* Car guardExited PLCS */
 
-        srand(time(0)); //Genererer seed baseret på nuværende tid
-
-        sleep((rand() % 7) + 1); //wait a bit outside parking lot
+        sleep(1); //wait a bit outside parking lot
     }
 
     return arg;
@@ -184,11 +179,10 @@ static void* exitGuardThread(void* arg){
 }
 
 int main(){
-    int arraySize = 5;
+    int arraySize = 3;
 
     int carID[arraySize];
-    pthread_t cars[arraySize];
-    pthread_t entry_gates, exit_gates;
+    pthread_t cars[arraySize], entry_gates[arraySize], exit_gates[arraySize];
 
     for(int i = 0; i < arraySize; i++){
         carID[i] = i;
@@ -203,16 +197,15 @@ int main(){
             cout << "Error creating car thread" << endl;
         }
 
-    }
+        status = pthread_create(&entry_gates[i], NULL, entryGuardThread, NULL);
+        if (status != 0){
+            cout << "Error creating guardEntry gate thread" << endl;
+        }
 
-    status = pthread_create(&entry_gates, NULL, entryGuardThread, NULL);
-    if (status != 0){
-        cout << "Error creating guardEntry gate thread" << endl;
-    }
-
-    status = pthread_create(&exit_gates, NULL, exitGuardThread, NULL);
-    if (status != 0){
-        cout << "Error creating guardExit gate thread" << endl;
+        status = pthread_create(&exit_gates[i], NULL, exitGuardThread, NULL);
+        if (status != 0){
+            cout << "Error creating guardExit gate thread" << endl;
+        }
     }
 
     /* Joining threads */
@@ -221,16 +214,16 @@ int main(){
         if (status != 0){
             cout << "Error joining car thread" << endl;
         }
-    }
 
-    status = pthread_join(entry_gates, NULL);
-    if (status != 0){
-        cout << "Error joining guardEntry gate thread" << endl;
-    }
+        status = pthread_join(entry_gates[i], NULL);
+        if (status != 0){
+            cout << "Error joining guardEntry gate thread" << endl;
+        }
 
-    status = pthread_join(exit_gates, NULL);
-    if (status != 0){
-        cout << "Error joining guardExit gate thread" << endl;
+        status = pthread_join(exit_gates[i], NULL);
+        if (status != 0){
+            cout << "Error joining guardExit gate thread" << endl;
+        }
     }
 
     pthread_exit(NULL);
