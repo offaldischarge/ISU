@@ -1,6 +1,6 @@
 SOURCES = PLCS.cpp
 OBJECTS = $(SOURCES:.c=.o)
-EXE = PLCS_extended
+EXE = PLCS
 
 $(EXE): $(OBJECTS)
 	$(CXX) -o $@ $< -pthread

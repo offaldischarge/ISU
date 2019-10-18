@@ -19,14 +19,14 @@ static void* carThread(void* arg){
 
     while(true){
 
-        cout << "Car waiting outside PL" << endl;
-
         /* Entry */
         //driveUpToEntry();
         stat = pthread_mutex_lock(&mutEntry);
         if(stat != 0){
             cout << "Error locking mutex" << endl;
         }
+
+        cout << "Car waiting outside PL" << endl;
 
         carWaitingToEnter = true;
 
@@ -58,12 +58,12 @@ static void* carThread(void* arg){
 
         sleep(2); // wait a bit inside PL
 
-        cout << "Car driving up to exit" << endl;
-
         /* Exit */
         //driveUpToExit();
 
         pthread_mutex_lock(&mutExit);
+
+        cout << "Car driving up to exit" << endl;
 
         carWaitingToExit = true;
         stat = pthread_cond_signal(&guardExit);
