@@ -53,7 +53,10 @@ static void* carThread(void* arg){
             cout << "Error condition signaling" << endl;
         }
 
-        pthread_mutex_unlock(&mutEntry);
+        stat = pthread_mutex_unlock(&mutEntry);
+        if(stat != 0){
+            cout << "Error condition signaling" << endl;
+        }
 
         /* Car entered PLCS */
 
@@ -64,11 +67,15 @@ static void* carThread(void* arg){
         /* Exit */
         //driveUpToExit();
 
-        pthread_mutex_lock(&mutExit);
+        stat = pthread_mutex_lock(&mutExit);
+        if(stat != 0){
+            cout << "Error locking mutex" << endl;
+        }
 
         cout << "Car " << *id << " driving up to exit" << endl;
 
         carWaitingToExit = true;
+
         stat = pthread_cond_signal(&guardExit);
         if(stat != 0){
             cout << "Error condition signaling" << endl;
@@ -125,10 +132,17 @@ static void* entryGuardThread(void* arg){
 
         //openEntryDoor();
         parkEntryOpen = true;
+
         stat = pthread_cond_signal(&guardEntry);
+        if(stat != 0){
+            cout << "Error condition signaling" << endl;
+        }
 
         while(carWaitingToEnter){
             stat = pthread_cond_wait(&guardEntry, &mutEntry);
+            if(stat != 0){
+                cout << "Error condition waiting" << endl;
+            }
         }
 
         //closeEntryDoor();
