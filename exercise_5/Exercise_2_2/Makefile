@@ -7,3 +7,7 @@ $(EXE): $(OBJECTS)
 
 %.o: %.cpp
 	$(CXX) -c -o $@ $<
+
+.PHONY: clean	
+clean:
+	rm -f $(EXE) $(OBJECTS)

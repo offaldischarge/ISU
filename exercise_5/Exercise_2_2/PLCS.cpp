@@ -1,74 +1,68 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <iostream>
-#include <time.h>
+#include <ctime>
+#include <cstdlib>
 
 using namespace std;
 
-static pthread_mutex_t mutEntry = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t mutExit = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mtx_enter = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mtx_exit = PTHREAD_MUTEX_INITIALIZER;
 
-static pthread_cond_t guardEntry = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t guardExit = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t entryGuard = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t exitGuard = PTHREAD_COND_INITIALIZER;
 
-static bool carWaitingToEnter,carWaitingToExit;
-static bool parkEntryOpen, parkExitOpen;
+static bool carWaitingToEnter,carWaitingToExit = false;
+static bool entryGuardOpen, exitGuardOpen = false;
 
 /* Car thread */
 static void* carThread(void* arg){
-    int stat = 0; //error integer
+    int status = 0; //error integer
     int *id = (int *) arg;
 
-    while(true){
+    srand(time(0)); //Generates seed based on current time
 
+    while(true){
         /* Entry */
-        //driveUpToEntry();
-        stat = pthread_mutex_lock(&mutEntry);
-        if(stat != 0){
+        status = pthread_mutex_lock(&mtx_enter);
+        if(status != 0){
             cout << "Error locking mutex" << endl;
         }
         cout << "Car " << *id << " waiting outside PL" << endl;
 
         carWaitingToEnter = true;
 
-        stat = pthread_cond_signal(&guardEntry);
-        if(stat != 0){
+        status = pthread_cond_signal(&entryGuard);
+        if(status != 0){
             cout << "Error condition signaling" << endl;
         }
 
-        while(!parkEntryOpen){
-            stat = pthread_cond_wait(&guardEntry, &mutEntry);
-            if(stat != 0){
+        while(!entryGuardOpen){
+            status = pthread_cond_wait(&entryGuard, &mtx_enter);
+            if(status != 0){
                 cout << "Error condition waiting" << endl;
             }
         }
 
-        //driveCarInPLCS();
         cout << "Car " << *id << " has entered PL" << endl;
 
         carWaitingToEnter = false;
 
-        stat = pthread_cond_signal(&guardEntry);
-        if(stat != 0){
+        status = pthread_cond_signal(&entryGuard);
+        if(status != 0){
             cout << "Error condition signaling" << endl;
         }
 
-        stat = pthread_mutex_unlock(&mutEntry);
-        if(stat != 0){
+        status = pthread_mutex_unlock(&mtx_enter);
+        if(status != 0){
             cout << "Error condition signaling" << endl;
         }
 
-        /* Car entered PLCS */
-
-        srand(time(0)); //Genererer seed baseret på nuværende tid
-
-        sleep((rand() % 7) + 1); //wait a bit outside parking lot
+        sleep((rand() % 6) + 1); //wait a bit outside parking lot
 
         /* Exit */
-        //driveUpToExit();
-
-        stat = pthread_mutex_lock(&mutExit);
-        if(stat != 0){
+        status = pthread_mutex_lock(&mtx_exit);
+        if(status != 0){
             cout << "Error locking mutex" << endl;
         }
 
@@ -76,80 +70,73 @@ static void* carThread(void* arg){
 
         carWaitingToExit = true;
 
-        stat = pthread_cond_signal(&guardExit);
-        if(stat != 0){
+        status = pthread_cond_signal(&exitGuard);
+        if(status != 0){
             cout << "Error condition signaling" << endl;
         }
 
-        while(!parkExitOpen){
-            stat = pthread_cond_wait(&guardExit, &mutExit);
-            if(stat != 0){
+        while(!exitGuardOpen){
+            status = pthread_cond_wait(&exitGuard, &mtx_exit);
+            if(status != 0){
                 cout << "Error condition waiting" << endl;
             }
         }
 
-        //driveOutOfPLCS();
         cout << "Car " << *id << " has exited PL" << endl;
+
         carWaitingToExit = false;
 
-        stat = pthread_cond_signal(&guardExit);
-        if(stat != 0){
+        status = pthread_cond_signal(&exitGuard);
+        if(status != 0){
             cout << "Error condition signaling" << endl;
         }
 
-        stat = pthread_mutex_unlock(&mutExit);
-        if(stat != 0){
+        status = pthread_mutex_unlock(&mtx_exit);
+        if(status != 0){
             cout << "Error locking mutex" << endl;
         }
 
-        /* Car guardExited PLCS */
-
-        srand(time(0)); //Genererer seed baseret på nuværende tid
-
-        sleep((rand() % 7) + 1); //wait a bit outside parking lot
+        sleep((rand() % 6) + 1); //wait a bit outside parking lot
     }
 
     return arg;
 }
 
 /* Entry guard thread */
-
 static void* entryGuardThread(void* arg){
-    int stat = 0;
+    int status = 0;
 
     while(true){
-        stat = pthread_mutex_lock(&mutEntry);
-        if(stat != 0){
+        status = pthread_mutex_lock(&mtx_enter);
+        if(status != 0){
             cout << "Error locking mutex" << endl;
         }
 
         while(!carWaitingToEnter){
-            stat = pthread_cond_wait(&guardEntry, &mutEntry);
-            if(stat != 0){
+            status = pthread_cond_wait(&entryGuard, &mtx_enter);
+            if(status != 0){
                 cout << "Error condition waiting" << endl;
             }
         }
 
-        //openEntryDoor();
-        parkEntryOpen = true;
+        entryGuardOpen = true;
 
-        stat = pthread_cond_signal(&guardEntry);
-        if(stat != 0){
+        status = pthread_cond_signal(&entryGuard);
+        if(status != 0){
             cout << "Error condition signaling" << endl;
         }
 
         while(carWaitingToEnter){
-            stat = pthread_cond_wait(&guardEntry, &mutEntry);
-            if(stat != 0){
+            status = pthread_cond_wait(&entryGuard, &mtx_enter);
+            if(status != 0){
                 cout << "Error condition waiting" << endl;
             }
         }
 
-        //closeEntryDoor();
-        parkEntryOpen = false;
+        entryGuardOpen = false;
 
-        stat = pthread_mutex_unlock(&mutEntry);
-        if(stat != 0){
+        status = pthread_mutex_unlock(&mtx_enter);
+        if(status != 0){
             cout << "Error unlocking mutex" << endl;
         }
     }
@@ -158,56 +145,60 @@ static void* entryGuardThread(void* arg){
 }
 
 /* Exit guard thread */
-
 static void* exitGuardThread(void* arg){
-    int stat = 0;
+    int status = 0;
 
     while(true){
 
-        stat = pthread_mutex_lock(&mutExit);
-        if(stat != 0){
+        status = pthread_mutex_lock(&mtx_exit);
+        if(status != 0){
             cout << "Error locking mutex" << endl;
         }
 
         while(!carWaitingToExit){
-            stat = pthread_cond_wait(&guardExit, &mutExit);
-        }
-
-        //openExitDoor();
-        parkExitOpen = true;
-        stat = pthread_cond_signal(&guardExit);
-        if(stat != 0){
-            cout << "Error condition signaling" << endl;
-        }
-
-        while(carWaitingToExit){
-            stat = pthread_cond_wait(&guardExit, &mutExit);
-            if(stat != 0){
+            status = pthread_cond_wait(&exitGuard, &mtx_exit);
+            if(status != 0){
                 cout << "Error condition waiting" << endl;
             }
         }
 
-        //closeExitDoor();
-        parkExitOpen = false;
+        exitGuardOpen = true;
 
-        stat = pthread_mutex_unlock(&mutExit);
+        status = pthread_cond_signal(&exitGuard);
+        if(status != 0){
+            cout << "Error condition signaling" << endl;
+        }
+
+        while(carWaitingToExit){
+            status = pthread_cond_wait(&exitGuard, &mtx_exit);
+            if(status != 0){
+                cout << "Error condition waiting" << endl;
+            }
+        }
+
+        exitGuardOpen = false;
+
+        status = pthread_mutex_unlock(&mtx_exit);
+        if(status != 0){
+            cout << "Error unlocking mutex" << endl;
+        }
     }
 
     return arg;
 }
 
 int main(){
+    int status;
+
     int arraySize = 5;
 
     int carID[arraySize];
     pthread_t cars[arraySize];
-    pthread_t entry_gates, exit_gates;
+    pthread_t entry_gate, exit_gate;
 
     for(int i = 0; i < arraySize; i++){
         carID[i] = i;
     }
-
-    int status;
 
     /* Creating threads */
     for(int i = 0; i < arraySize; i++){
@@ -218,14 +209,14 @@ int main(){
 
     }
 
-    status = pthread_create(&entry_gates, NULL, entryGuardThread, NULL);
+    status = pthread_create(&entry_gate, NULL, entryGuardThread, NULL);
     if (status != 0){
-        cout << "Error creating guardEntry gate thread" << endl;
+        cout << "Error creating entryGuard gate thread" << endl;
     }
 
-    status = pthread_create(&exit_gates, NULL, exitGuardThread, NULL);
+    status = pthread_create(&exit_gate, NULL, exitGuardThread, NULL);
     if (status != 0){
-        cout << "Error creating guardExit gate thread" << endl;
+        cout << "Error creating exitGuard gate thread" << endl;
     }
 
     /* Joining threads */
@@ -236,14 +227,14 @@ int main(){
         }
     }
 
-    status = pthread_join(entry_gates, NULL);
+    status = pthread_join(entry_gate, NULL);
     if (status != 0){
-        cout << "Error joining guardEntry gate thread" << endl;
+        cout << "Error joining entryGuard gate thread" << endl;
     }
 
-    status = pthread_join(exit_gates, NULL);
+    status = pthread_join(exit_gate, NULL);
     if (status != 0){
-        cout << "Error joining guardExit gate thread" << endl;
+        cout << "Error joining exitGuard gate thread" << endl;
     }
 
     pthread_exit(NULL);
