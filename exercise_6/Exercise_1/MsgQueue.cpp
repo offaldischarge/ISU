@@ -1,47 +1,62 @@
 #include "MsgQueue.h"
 
-MsgQueue::MsgQueue(unsigned long maxSize) : msgQueue(maxSize){
-    maxSize = maxSize;
-}
+MsgQueue::MsgQueue(unsigned long maxSize) {
 
-MsgQueue::~MsgQueue(){}
-
-void MsgQueue::send(unsigned long id, Message* msg){
     pthread_mutex_lock(&mtx);
 
-    while(msgQueue.size() == maxSize){
-        pthread_cond_wait(&condReceive, &mtx);
-    }
+    maxQueueSize = maxSize;
 
-    item->id = id;
-    *item->msg = *msg;
+    queueSizeSet = true;
 
-    msgQueue.push_back(item);
-
-    pthread_cond_signal(&condSend);
+    pthread_cond_broadcast(&setQueueSize);
 
     pthread_mutex_unlock(&mtx);
 }
 
-Message* MsgQueue::receive(unsigned long &id){
+void MsgQueue::send(unsigned long id, Message* msg){
+
     pthread_mutex_lock(&mtx);
+
+    while(!queueSizeSet){
+        pthread_cond_wait(&setQueueSize, &mtx);
+    }
+
+    while(msgQueue.size() == maxQueueSize){
+        pthread_cond_wait(&condSend, &mtx);
+    }
+
+    Item* item = new Item(id, msg);
+    msgQueue.push_back(item);
+
+    pthread_cond_signal(&condReceive);
+
+    pthread_mutex_unlock(&mtx);
+}
+
+Message* MsgQueue::receive(unsigned long& id){
+
+    pthread_mutex_lock(&mtx);
+
+    while(!queueSizeSet){
+        pthread_cond_wait(&setQueueSize, &mtx);
+    }
 
     while(msgQueue.empty()){
         pthread_cond_wait(&condReceive, &mtx);
     }
 
-    item = (Item*) msgQueue.front(); //Downcasting
+    Item* item = msgQueue.front();
     msgQueue.pop_front();
 
-    id = item->id;
+    pthread_cond_signal(&condSend);
 
-    pthread_cond_signal(&condReceive);
+    id = item->id;
+    Message* msg = item->msg;
+    delete item;
 
     pthread_mutex_unlock(&mtx);
 
-    return item->msg;
+    return msg;
 }
 
-int main(){
-
-}
+MsgQueue::~MsgQueue(){}

@@ -2,25 +2,26 @@
 #include <deque>
 #include <pthread.h>
 
-using namespace std;
-
 class MsgQueue{
 public:
     MsgQueue(unsigned long maxSize);
-    void send(unsigned long id, Message *msg = NULL);
-    Message* receive(unsigned long &id);
+    void send(unsigned long id, Message* msg = NULL);
+    Message* receive(unsigned long& id);
     ~MsgQueue();
 private:
-    unsigned long maxSize;
+    unsigned long maxQueueSize;
+    bool queueSizeSet = false;
 
-    deque<Message*> msgQueue;
-
-    struct Item : public Message {
+    struct Item{
+        Item(unsigned long id, Message* msg) : id(id), msg(msg){}
         unsigned long id;
-        Message *msg;
-    } *item;
+        Message* msg;
+    };
 
-    pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+    std::deque<Item*> msgQueue;
+
     pthread_cond_t condSend = PTHREAD_COND_INITIALIZER;
     pthread_cond_t condReceive = PTHREAD_COND_INITIALIZER;
+    pthread_cond_t setQueueSize = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 };
