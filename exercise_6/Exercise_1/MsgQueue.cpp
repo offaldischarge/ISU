@@ -9,7 +9,7 @@ MsgQueue::~MsgQueue(){}
 void MsgQueue::send(unsigned long id, Message* msg){
     pthread_mutex_lock(&mtx);
 
-    while(msgQueue.size() > maxSize){
+    while(msgQueue.size() == maxSize){
         pthread_cond_wait(&condReceive, &mtx);
     }
 
