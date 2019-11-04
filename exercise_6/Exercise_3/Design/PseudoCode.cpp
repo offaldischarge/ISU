@@ -60,7 +60,7 @@ void* carThread(void* arg){
         unsigned long id;
         Message* msg = carMq.receive(id); //RECEIVE
         carHandler(id, msg, carID);
-        delete(msg);
+        delete msg;
     }
 }
 
@@ -127,8 +127,6 @@ void* entryDoorController(void* arg){
         entryDoorHandler(id, msg);
         delete msg;
     }
-
-    return nulltpr;
 }
 
 /* Entry door thread end */
@@ -160,7 +158,6 @@ void* exitDoorController(void* arg){
         exitDoorHandler(id, msg);
         delete msg;
     }
-    return nullptr;
 }
 
 /* Entry door thread end */
