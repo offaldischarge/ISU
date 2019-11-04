@@ -18,9 +18,12 @@ public:
     Message* receive(unsigned long& id);
     ~MsgQueue();
 private:
+    unsigned long maxQueueSize;
+    bool queueSizeSet = false;
+
     deque<Message*> msgQueue;
 
-    struct Item : public Message {
+    struct Item {
         unsigned long id;
         Message *msg;
     };
@@ -28,29 +31,38 @@ private:
     mutex mtx;
     cond_t condSend;
     cond_t condReceive;
-
-    unsigned long maxSize;
+    cond_t setQueueSize
 }
 
 MsgQueue(unsigned long maxSize){ //Constructor
-    msgQueue(maxSize); //set size of message queue
+    mutex_lock(mtx);
+
+    maxQueueSize = maxSize;
+
+    queueSizeSet = true;
+
+    broadcast(setQueueSize);
+
+    mutex_unlock(mtx);
 }
 
 void send(unsigned long id, Message *msg = NULL){
 
     mutex_lock(mtx);
-    //block if filled to the maximum denoted capacity
-    while(deque is full){
-        cond_wait(condReceive, mtx);
+
+    while(queueSizeSet hasn't been set){
+        cond_wait(setQueueSize, mtx);
     }
 
-    Item *sendItem;
-    sendItem.id = id;
-    *sendItem.msg = *msg;
+    //block if filled to the maximum denoted capacity
+    while(deque is full){
+        cond_wait(condSend, mtx);
+    }
 
+    Item *sendItem = new Item(id, msg); //sender allocates
     msgQueue.push_back(sendItem);
 
-    cond_signal(condSend);
+    cond_signal(condReceive);
 
     mutex_unlock(mtx);
 }
@@ -59,21 +71,27 @@ Message* receive(unsigned long &id){
 
     mutex_lock(mtx);
 
+    while(queueSizeSet hasn't been set){
+        cond_wait(setQueueSize, mtx);
+    }
+
     //block if queue is empty
     while(deque is empty){
-        cond_wait(condSend, mtx);
+        cond_wait(condReceive, mtx);
     }
 
     Item *receiveItem = msgQueue.front();
     msgQueue.pop_front();
 
-    id = *receiveItem.id;
+    cond_signal(condSend);
 
-    cond_signal(condReceive);
+    id = receiveItem.id;
+    Message *msg = item->msg;
+    delete item;        //receiver deletes
 
     mutex_unlock(mtx);
 
-    return *receiveItem.msg;
+    return msg;
 }
 
 ~MsgQueue(){}

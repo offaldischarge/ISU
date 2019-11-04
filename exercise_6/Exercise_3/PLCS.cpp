@@ -109,7 +109,7 @@ void* carThread(void* arg){
         unsigned long id;
         Message* msg = carMq.receive(id); //RECEIVE
         carHandler(id, msg, carId);
-        delete(msg);
+        delete msg;
     }
 
     return nullptr;
@@ -193,12 +193,12 @@ int main(){
     pthread_create(&entryDoor, NULL, entryDoorThread, NULL);
     pthread_create(&exitDoor, NULL, exitDoorThread, NULL);
 
-    pthread_join(entryDoor, NULL);
-    pthread_join(exitDoor, NULL);
-
     for(int i = 0; i < noOfCars; i++){
         pthread_join(cars[i], NULL);
     }
+
+    pthread_join(entryDoor, NULL);
+    pthread_join(exitDoor, NULL);
 
     return 0;
 }
