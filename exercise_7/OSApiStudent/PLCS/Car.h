@@ -4,27 +4,28 @@
 #include <osapi/ThreadFunctor.hpp>
 #include <osapi/MsgQueue.hpp>
 #include <osapi/Message.hpp>
+#include <osapi/Utility.hpp>
+#include <iostream>
 #include "EntryGuard.h"
 #include "ExitGuard.h"
+#include "PLCSMessages.h" //Common Message header file
 
-struct EntryDoorOpenRequest : public Message{
-    MsgQueue* whoIsAskingMq;
-};
-
-struct ExitDoorOpenRequest : public Message{
-    MsgQueue* whoIsAskingMq;
-};
+// forward declaration
+class EntryGuard;
+class ExitGuard;
 
 class Car : public osapi::ThreadFunctor {
+
 public:
     static const int MAX_QUEUE_SIZE = 10;
-    Car(EntryGuard* entryguard, ExitGuard* exitguard, int) :
-    entry(entrygard), exit(exitguad),
-    carMq(MAX_QUEUE_SIZE), entry(MAX_QUEUE_SIZE), exit(MAX_QUEUE_SIZE) {}
-    enum CarIDs {ID_ENTRY_INDICATOR,
-                 ID_ENTRY_DOOR_OPEN_CONFIRM,
-                 ID_EXIT_INDICATOR,
-                 ID_EXIT_DOOR_OPEN_CONRFIM}
+
+    Car(EntryGuard* entry, ExitGuard* exit, int id) :
+    entryGuard(entry), exitGuard(exit), carMq(MAX_QUEUE_SIZE), carID(id) {}
+
+    enum CarIDs {ID_ENTRY_DOOR_OPEN_CONFIRM,
+                 ID_WAIT_INSIDE_PLCS,
+                 ID_EXIT_DOOR_OPEN_CONFIRM,
+                 ID_WAIT_OUTSIDE_PLCS};
 protected:
     virtual void run();
 private:
@@ -34,14 +35,11 @@ private:
     void carHandleEntryOpenConfirm(EntryDoorOpenConfirm*);
     void carHandleExitOpenConfirm(ExitDoorOpenConfirm*);
 
-    void enterPLCS();
-    void exitPLCS();
-
     osapi::MsgQueue carMq;
-    int carId;
+    int carID;
 
-    EntryGuard* entry;
-    ExitGuard* exit;
+    EntryGuard* entryGuard;
+    ExitGuard* exitGuard;
 };
 
 #endif

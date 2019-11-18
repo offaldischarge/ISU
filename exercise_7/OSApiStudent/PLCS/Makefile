@@ -1,4 +1,4 @@
-SRCS = PLCS.cpp
+SRCS = EntryGuard.cpp ExitGuard.cpp Car.cpp main.cpp
 OBJ = $(SRCS:.cpp=.o)
 EXE = plcs
 
@@ -16,7 +16,7 @@ CXXFLAGS+=-Wall -D_REENTRANT -DOS_LINUX -I$(BASEPATH)/inc
 
 # Note how the flags are part of the compilation of .cpp file(s)
 %.o: %.cpp
-	g++ $(CXXFLAGS) -c -o $@ $^
+	g++ $(CXXFLAGS) -c -o $@ $<
 
 # Then again, note how the flags are NOT part of the linking process
 $(EXE): $(OBJ)

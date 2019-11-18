@@ -4,10 +4,10 @@ osapi::MsgQueue* ExitGuard::getMsgQueue(){
     return &exitMq;
 }
 
-virtual void ExitGuard::run(){
+void ExitGuard::run(){
     for(;;){
         unsigned long id;
-        Message *msg = exitMq.receive(id);
+        osapi::Message *msg = exitMq.receive(id);
         exitDoorHandler(id, msg);
         delete msg;
     }
@@ -16,7 +16,7 @@ virtual void ExitGuard::run(){
 void ExitGuard::exitHandleOpenRequest(ExitDoorOpenRequest* request){
     ExitDoorOpenConfirm* confirm = new ExitDoorOpenConfirm;
     confirm->result = true;
-    request->whoIsAskingMq->send(ID_EXIT_DOOR_OPEN_CONFIRM, confirm);
+    request->whoIsAskingMq->send(Car::ID_EXIT_DOOR_OPEN_CONFIRM, confirm);
 }
 
 void ExitGuard::exitDoorHandler(unsigned long id, osapi::Message* msg){

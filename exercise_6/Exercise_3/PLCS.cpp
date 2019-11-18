@@ -7,7 +7,7 @@
 
 static int noOfCars = 3;
 static int noOfMsg = 10;
-MsgQueue carMq(noOfMsg);
+
 MsgQueue entryMq(noOfMsg);
 MsgQueue exitMq(noOfMsg);
 
@@ -34,8 +34,10 @@ struct ExitDoorOpenConfirm : public Message{
 enum carIDs{
     ID_ENTRY_INDICATOR,
     ID_ENTRY_DOOR_OPEN_CONFIRM,
+    ID_WAIT_INSIDE_PLCS,
     ID_EXIT_INDICATOR,
-    ID_EXIT_DOOR_OPEN_CONFIRM
+    ID_EXIT_DOOR_OPEN_CONFIRM,
+    ID_WAIT_OUTSIDE_PLCS
 };
 
 enum entryDoorIDs {ID_ENTRY_DOOR_OPEN_REQUEST};
@@ -44,57 +46,63 @@ enum exitDoorIDs {ID_EXIT_DOOR_OPEN_REQUEST};
 
 /* Car thread */
 
-void enterPLCS(){
+void enterPLCS(MsgQueue& carMq){
     carMq.send(ID_ENTRY_INDICATOR); //SEND ENTRY INDICATOR
 }
 
-void exitPLCS(){
+void exitPLCS(MsgQueue& carMq){
     carMq.send(ID_EXIT_INDICATOR); //SEND EXIT INDICATOR
 }
 
-void carHandleEntryIndicator(int* carID){
+void carHandleEntryIndicator(int* carID, MsgQueue& carMq){
     std::cout << "Car " << *carID << " is waiting outside PL" << std::endl;
     EntryDoorOpenRequest* request = new EntryDoorOpenRequest;
     request->whoIsAskingMq = &carMq;
     entryMq.send(ID_ENTRY_DOOR_OPEN_REQUEST, request);
 }
 
-void carHandleExitIndicator(int* carID){
+void carHandleExitIndicator(int* carID, MsgQueue& carMq){
     std::cout << "Car " << *carID << " is driving up to exit" << std::endl;
     ExitDoorOpenRequest* request = new ExitDoorOpenRequest;
     request->whoIsAskingMq = &carMq;
     exitMq.send(ID_EXIT_DOOR_OPEN_REQUEST, request);
 }
 
-void carHandleEntryOpenConfirm(EntryDoorOpenConfirm* confirm, int *carId){
+void carHandleEntryOpenConfirm(EntryDoorOpenConfirm* confirm, int* carId, MsgQueue& carMq){
     if(confirm->result){
         std::cout << "Car " << *carId << " has entered PL" << std::endl;
+        carMq.send(ID_WAIT_INSIDE_PLCS);
     }
 }
 
-void carHandleExitOpenConfirm(ExitDoorOpenConfirm* confirm, int *carId){
+void carHandleExitOpenConfirm(ExitDoorOpenConfirm* confirm, int* carId, MsgQueue& carMq){
     if(confirm->result){
         std::cout << "Car " << *carId << " has exited PL" << std::endl;
+        carMq.send(ID_WAIT_OUTSIDE_PLCS);
     }
 }
 
-void carHandler(unsigned long id, Message* msg, int *carID){ //car dispatcher
+void carHandler(unsigned long id, Message* msg, int* carID, MsgQueue& carMq){ //car dispatcher
     switch(id){
         case ID_ENTRY_INDICATOR:
-            carHandleEntryIndicator(carID);
-            break;
-		case ID_EXIT_INDICATOR:
-            carHandleExitIndicator(carID);
+            carHandleEntryIndicator(carID, carMq);
             break;
         case ID_ENTRY_DOOR_OPEN_CONFIRM:
-            carHandleEntryOpenConfirm(static_cast<EntryDoorOpenConfirm*>(msg), carID);
-			sleep((rand() % 6) + 1); //wait a bit inside parking lot
-			exitPLCS(); //SEND EXIT INDICATOR
+            carHandleEntryOpenConfirm(static_cast<EntryDoorOpenConfirm*>(msg), carID, carMq);
+            break;
+        case ID_WAIT_INSIDE_PLCS:
+            sleep((rand() % 6) + 1); //wait a bit inside parking lot
+            exitPLCS(carMq); //SEND EXIT INDICATOR
+            break;
+        case ID_EXIT_INDICATOR:
+            carHandleExitIndicator(carID, carMq);
             break;
         case ID_EXIT_DOOR_OPEN_CONFIRM:
-            carHandleExitOpenConfirm(static_cast<ExitDoorOpenConfirm*>(msg), carID);
-			sleep((rand() % 6) + 1); //wait a bit outside parking lot
-			enterPLCS(); //SEND ENTRY INDICATOR AGAIN
+            carHandleExitOpenConfirm(static_cast<ExitDoorOpenConfirm*>(msg), carID, carMq);
+            break;
+        case ID_WAIT_OUTSIDE_PLCS:
+            sleep((rand() % 6) + 1); //wait a bit outside parking lot
+            enterPLCS(carMq); //SEND ENTRY INDICATOR AGAIN
             break;
     }
 }
@@ -102,13 +110,14 @@ void carHandler(unsigned long id, Message* msg, int *carID){ //car dispatcher
 void* carThread(void* arg){
 
     int* carId = (int*) arg;
+    MsgQueue carMq(noOfMsg);
 
-    enterPLCS();
+    enterPLCS(carMq);
 
-    for(;;){    //EVENT LOOP
+    while(true){    //EVENT LOOP
         unsigned long id;
         Message* msg = carMq.receive(id); //RECEIVE
-        carHandler(id, msg, carId);
+        carHandler(id, msg, carId, carMq);
         delete msg;
     }
 
@@ -134,7 +143,7 @@ void entryDoorHandler(unsigned long id, Message *msg){  //entry door dispatcher
 }
 
 void* entryDoorThread(void* arg){
-    for(;;){                                //event loop
+    while(true){                                //event loop
         unsigned long id;
         Message *msg = entryMq.receive(id);
         entryDoorHandler(id, msg);
@@ -163,7 +172,7 @@ void exitDoorHandler(unsigned long id, Message *msg){   //exit door dispatcher
 }
 
 void* exitDoorThread(void* arg){
-    for(;;){
+    while(true){
         unsigned long id;
         Message *msg = exitMq.receive(id);
         exitDoorHandler(id, msg);

@@ -9,7 +9,7 @@ protected:
   virtual void run()
   {
     int count = 0;
-    
+
     for(;;)
     {
       std::cout << "Iteration : " << count << std::endl;
@@ -18,7 +18,7 @@ protected:
         break;
       osapi::sleep(1000);
     }
-    
+
   }
 
 };
@@ -27,7 +27,7 @@ protected:
 int main(int argc, char* argv[])
 {
   {
-    
+    srand(time(0))
     TestThread tt;
 
     osapi::Thread t(&tt);
@@ -36,6 +36,6 @@ int main(int argc, char* argv[])
     t.setPriority(osapi::Thread::PRIORITY_ABOVE_NORMAL);
     osapi::sleep(1000);
     t.join();
-    
+
   }
 }

@@ -2,15 +2,17 @@
 #define EXITGUARD_H_
 
 #include <osapi/ThreadFunctor.hpp>
-
-struct ExitDoorOpenConfirm : public Message{
-    bool result;
-};
+#include <osapi/MsgQueue.hpp>
+#include <osapi/Message.hpp>
+#include "Car.h"
+#include "PLCSMessages.h"
 
 class ExitGuard : public osapi::ThreadFunctor {
 public:
+    static const int MAX_QUEUE_SIZE = 10;
+    ExitGuard() : exitMq(MAX_QUEUE_SIZE){}
     enum ExitIDs{ID_EXIT_DOOR_OPEN_REQUEST};
-    osapi::MsgQueue getMsgQueue();
+    osapi::MsgQueue* getMsgQueue();
 protected:
     virtual void run();
 private:
