@@ -16,7 +16,7 @@ void ExitGuard::run(){
 void ExitGuard::exitHandleOpenRequest(ExitDoorOpenRequest* request){
     ExitDoorOpenConfirm* confirm = new ExitDoorOpenConfirm;
     confirm->result = true;
-    request->whoIsAskingMq->send(Car::ID_EXIT_DOOR_OPEN_CONFIRM, confirm);
+    request->car->getMsgQueue()->send(Car::ID_EXIT_DOOR_OPEN_CONFIRM, confirm);
 }
 
 void ExitGuard::exitDoorHandler(unsigned long id, osapi::Message* msg){

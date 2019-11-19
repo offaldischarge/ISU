@@ -19,6 +19,8 @@ class Car : public osapi::ThreadFunctor {
 public:
     static const int MAX_QUEUE_SIZE = 10;
 
+    osapi::MsgQueue* getMsgQueue();
+
     Car(EntryGuard* entry, ExitGuard* exit, int id) :
     entryGuard(entry), exitGuard(exit), carMq(MAX_QUEUE_SIZE), carID(id) {}
 

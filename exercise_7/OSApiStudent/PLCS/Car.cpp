@@ -1,5 +1,9 @@
 #include "Car.h"
 
+osapi::MsgQueue* Car::getMsgQueue(){
+    return &carMq;
+}
+
 void Car::carHandleEntryOpenConfirm(EntryDoorOpenConfirm* confirm){
     if(confirm->result){
         std::cout << "Car " << carID << " has entered PL" << std::endl;
@@ -17,14 +21,14 @@ void Car::carHandleExitOpenConfirm(ExitDoorOpenConfirm* confirm){
 void Car::carHandleEntryIndicator(){
     std::cout << "Car " << carID << " is waiting outside PL" << std::endl;
     EntryDoorOpenRequest* request = new EntryDoorOpenRequest;
-    request->whoIsAskingMq = &carMq;
+    request->car = this;
     entryGuard->getMsgQueue()->send(EntryGuard::ID_ENTRY_DOOR_OPEN_REQUEST, request); //?
 }
 
 void Car::carHandleExitIndicator(){
     std::cout << "Car " << carID << " is driving up to exit" << std::endl;
     ExitDoorOpenRequest* request = new ExitDoorOpenRequest;
-    request->whoIsAskingMq = &carMq;
+    request->car = this;
     exitGuard->getMsgQueue()->send(ExitGuard::ID_EXIT_DOOR_OPEN_REQUEST, request); //?
 }
 

@@ -1,12 +1,14 @@
 #ifndef PLCSMESSAGES_H_
 #define PLCSMESSAGES_H_
 
+class Car; //Forward declaration
+
 struct EntryDoorOpenRequest : public osapi::Message {
-    osapi::MsgQueue* whoIsAskingMq;
+    Car* car;
 };
 
 struct ExitDoorOpenRequest : public osapi::Message {
-    osapi::MsgQueue* whoIsAskingMq;
+    Car* car;
 };
 
 struct EntryDoorOpenConfirm : public osapi::Message {
