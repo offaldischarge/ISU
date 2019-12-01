@@ -39,9 +39,16 @@ SmartString& SmartString::operator=(const SmartString& other){
 
     std::cout << "Assignment is used!" << std::endl; //for tests
 
-    if(&other != this){
+    if(this != &other){
+        (*counter_)--;
+        if(*counter_== 0){
+            delete str_;
+            delete counter_;
+        }
+
         str_ = other.str_;
         counter_ = other.counter_;
+        (*counter_)++;
     }
     return *this;
 
