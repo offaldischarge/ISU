@@ -4,7 +4,7 @@
 #include <osapi/ThreadFunctor.hpp>
 #include <osapi/MsgQueue.hpp>
 #include <Publisher.hpp>
-
+#include <MessageDistributionSystem.hpp> // added
 
 /**
  * class Subsciber
@@ -28,10 +28,9 @@ protected:
 private:
   enum {
     ID_TERMINATE,
-    ID_HELLO 
+    ID_HELLO
   };
   unsigned int subId_;
 };
 
 #endif
-

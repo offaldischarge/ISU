@@ -12,7 +12,7 @@ struct HelloMsg : public osapi::Message
 {
   std::string data_;
 };
-const std::string HELLO_MSG;
+const std::string HELLO_MSG = "HelloMsg";
 
 
 class Publisher : public osapi::ThreadFunctor
@@ -24,13 +24,13 @@ private:
   void handleMsgIdTimeOut();
   void handleMsg(unsigned long id, osapi::Message* msg);
   virtual void run();
-  
+
   bool                 running_;
   osapi::MsgQueue      mq_;
   osapi::ITimerId*     timer_;
-  
+
   enum { ID_TIME_OUT,
-         ID_TERMINATE 
+         ID_TERMINATE
   };
 
   enum { TIMEOUT = 1000 };

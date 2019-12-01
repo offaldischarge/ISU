@@ -4,7 +4,7 @@ OBJS=$(SRCS:.cpp=.o)
 DEPS=$(SRCS:.cpp=.d)
 EXE=main
 # The ?= means only set if was not specified on the cmd line - Set for your particular needs!
-BASEPATH?=/home/stud/apps/OSApi
+BASEPATH?=..
 # Determine whether this is a debug build or not
 ifdef DEBUG
 CXXFLAGS=-ggdb -O0
@@ -21,7 +21,7 @@ CXX?=g++
 # Then again, note how the flags are NOT part of the linking process
 all: $(EXE)
 
-$(EXE): $(DEPS) $(OBJS) 
+$(EXE): $(DEPS) $(OBJS)
 	@echo "Linking $@"
 	@g++ -o main $(OBJS) -L$(LIBPATH) -lOSApi -lrt -lpthread
 
@@ -29,7 +29,7 @@ $(EXE): $(DEPS) $(OBJS)
 	@echo "Compiling $<"
 	@$(CXX) -o $@ -c $< $(CXXFLAGS)
 
-%.d: %.cpp 
+%.d: %.cpp
 	@echo "Generating dependency for $<"
 	@$(CXX) -MT$(@:.d=.o) -MM $(CXXFLAGS) $^ > $@
 

@@ -27,7 +27,13 @@ void Publisher::handleMsgIdTimeOut()
   /* Write the necessary code to publish an event */
   /************************************************/
   /************************************************/
-  
+
+  HelloMsg* helloMsg = new HelloMsg;
+
+  helloMsg->data_ = "Hello message!";
+
+  MessageDistributionSystem::getInstance().notify(HELLO_MSG, helloMsg);
+
   timer_->reArm(); // Timeout in TIMEOUT msec
 }
 
@@ -47,7 +53,7 @@ void Publisher::handleMsg(unsigned long id, osapi::Message* msg)
       OSAPI_LOG_DBG("Arg, got unknown event...");
       break;
   }
-  
+
 }
 
 
@@ -69,5 +75,3 @@ void Publisher::run()
 
   OSAPI_LOG_DBG("Thread terminating...");
 }
-
-
