@@ -22,11 +22,6 @@ Publisher::~Publisher()
 void Publisher::handleMsgIdTimeOut()
 {
   OSAPI_LOG_DBG("Got timeout, publishing message and rearming...");
-  /************************************************/
-  /************************************************/
-  /* Write the necessary code to publish an event */
-  /************************************************/
-  /************************************************/
 
   HelloMsg* helloMsg = new HelloMsg;
 

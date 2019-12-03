@@ -7,11 +7,6 @@ static const int MAX_QUEUE_SIZE=10;
 Subscriber::Subscriber(unsigned int subId)
   :  running_(true), mq_(MAX_QUEUE_SIZE), subId_(subId)
 {
-    /*****************************************************/
-    /*****************************************************/
-    /* Write the necessary code to subscribe to an event */
-    /*****************************************************/
-    /*****************************************************/
     MessageDistributionSystem::getInstance().subscribe(HELLO_MSG, &mq_, ID_HELLO);
 }
 
@@ -25,12 +20,6 @@ Subscriber::~Subscriber()
 void Subscriber::handleMsgIdHello(HelloMsg* hm)
 {
     OSAPI_LOG_DBG("S(" << subId_ << ") The hello message contained: '" << hm->data_ << "'");
-
-    /*******************************************************/
-    /*******************************************************/
-    /* Write the necessary code to unsubscribe to an event */
-    /*******************************************************/
-    /*******************************************************/
 
     MessageDistributionSystem::getInstance().unSubscribe(HELLO_MSG, &mq_, ID_HELLO);
 
